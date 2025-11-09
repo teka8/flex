@@ -6,6 +6,7 @@ import { Star, MapPin, Users, Wifi, Coffee, Tv, ChevronRight, ChevronLeft } from
 import { Button } from "@/components/ui/button";
 import { Review } from "@/types/review";
 import { mockGoogleReviews } from "@/data/mockGoogleReviews";
+import { mockReviews } from "../data/mockReviews"; // Import mock data
 
 const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,11 +16,18 @@ const PropertyDetails = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      const response = await fetch('/api/reviews/hostaway');
-      const data = await response.json();
       const decodedId = decodeURIComponent(id ?? "");
       setPropertyName(decodedId);
-      setReviews(data.result.filter((r: Review) => r.listingName === decodedId));
+
+      if (import.meta.env.PROD) {
+        // In production, use mock data directly
+        setReviews(mockReviews.filter((r: Review) => r.listingName === decodedId));
+      } else {
+        // In development, fetch from API
+        const response = await fetch('/api/reviews/hostaway');
+        const data = await response.json();
+        setReviews(data.result.filter((r: Review) => r.listingName === decodedId));
+      }
     };
 
     fetchReviews();
