@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import ReviewsChart from "@/components/reviews/ReviewsChart";
+import { mockReviews } from "../data/mockReviews"; // Import mock data
 
 const Dashboard = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -27,29 +28,45 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      const response = await fetch('/api/reviews/hostaway');
-      const data = await response.json();
-      setReviews(data.result);
+      if (import.meta.env.PROD) {
+        // In production, use mock data directly
+        setReviews(mockReviews);
+      } else {
+        // In development, fetch from API
+        const response = await fetch('/api/reviews/hostaway');
+        const data = await response.json();
+        setReviews(data.result);
+      }
     };
 
     fetchReviews();
   }, []);
 
   const handleApprove = async (id: number) => {
-    const response = await fetch(`/api/reviews/${id}/approve`, { method: 'PUT' });
-    if (response.ok) {
-      const updatedReview = await response.json();
-      setReviews(reviews.map(r => r.id === id ? updatedReview : r));
+    if (import.meta.env.PROD) {
+      setReviews(reviews.map(r => r.id === id ? { ...r, isApproved: true } : r));
       toast.success("Review approved for public display");
+    } else {
+      const response = await fetch(`/api/reviews/${id}/approve`, { method: 'PUT' });
+      if (response.ok) {
+        const updatedReview = await response.json();
+        setReviews(reviews.map(r => r.id === id ? updatedReview : r));
+        toast.success("Review approved for public display");
+      }
     }
   };
 
   const handleReject = async (id: number) => {
-    const response = await fetch(`/api/reviews/${id}/reject`, { method: 'PUT' });
-    if (response.ok) {
-      const updatedReview = await response.json();
-      setReviews(reviews.map(r => r.id === id ? updatedReview : r));
+    if (import.meta.env.PROD) {
+      setReviews(reviews.map(r => r.id === id ? { ...r, isApproved: false } : r));
       toast.error("Review rejected");
+    } else {
+      const response = await fetch(`/api/reviews/${id}/reject`, { method: 'PUT' });
+      if (response.ok) {
+        const updatedReview = await response.json();
+        setReviews(reviews.map(r => r.id === id ? updatedReview : r));
+        toast.error("Review rejected");
+      }
     }
   };
 

@@ -5,6 +5,7 @@ import { ReviewCard } from "@/components/reviews/ReviewCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Review } from "@/types/review";
 import { Star } from "lucide-react";
+import { mockReviews } from "../data/mockReviews"; // Import mock data
 
 const DashboardPropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,11 +14,18 @@ const DashboardPropertyDetails = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      const response = await fetch('/api/reviews/hostaway');
-      const data = await response.json();
       const decodedId = decodeURIComponent(id ?? "");
       setPropertyName(decodedId);
-      setReviews(data.result.filter((r: Review) => r.listingName === decodedId));
+
+      if (import.meta.env.PROD) {
+        // In production, use mock data directly
+        setReviews(mockReviews.filter((r: Review) => r.listingName === decodedId));
+      } else {
+        // In development, fetch from API
+        const response = await fetch('/api/reviews/hostaway');
+        const data = await response.json();
+        setReviews(data.result.filter((r: Review) => r.listingName === decodedId));
+      }
     };
 
     fetchReviews();
